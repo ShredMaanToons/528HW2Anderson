@@ -55,29 +55,35 @@ PWM can be used to control the state of systems such as motors, reduce the inten
 There are 4 modules and each has 7 PWM modules.
 
 ### 11) Describe the steps needed to initialize P2.4 as a PWM output driven by Timer_A0 CCR1 (TA0.1).
+Configure GPIO for the pin. Set the timer Capture/Compare register to the specified period_constant. Set clock frequency with CTL and EX0 registers. Configure the output mode with the CCTL registers. Set the duty cycle of the PWM signal with the CCR register. Select the clock source with the CTL register.
+
 Include C code such that:
 > The P2.4 pin is configured to use its primary module function (Timer_A output)
 P2->SEL0 |= 0x10;
 P2->SEL1 &= ~(0x10);
 P2->DIR |= 0x10;
 > SMCLK is selected as the clock source for Timer_A
-TIMER_A0->TA0CTL &= ~(0x0300);
-TIMER_A0->TA0CTL |= (0x0200);
+TIMER_A0->CTL &= ~(0x0300);
+TIMER_A0->CTL |= (0x0200);
 > The timer clock is divided by 2
-TIMER_A0->TA0CTL &= ~(0xC0);
-TIMER_A0->TA0CTL |= (0x40);
+TIMER_A0->CTL &= ~(0xC0);
+TIMER_A0->CTL |= (0x40);
 > Up/down mode is selected
-TIMER_A0->TA0CTL |= (0x30);
+TIMER_A0->CTL |= (0x30);
 > The output mode is configured as Toggle / Reset by setting the appropriate bits of the OUTMOD field in the CCTL[1] register
-TIMER_A0->TA0CCTL[1] &= ~(0xE0);
-TIMER_A0->TA0CCTL[1] |= (0x40);
+TIMER_A0->CCTL[1] &= ~(0xE0);
+TIMER_A0->CCTL[1] |= (0x40);
 > The PWM signal has a period of 20 ms and a duty cycle of 50%
-
+TIMER_A0->CCR[1] = 0x00FF;
 
 ### 12) Describe the steps needed to configure Timer_A0 to generate a periodic interrupt every 2 ms with an interrupt priority level of 2. Note that Timer_A0 has an interrupt number of 8.
+Configure GPIO for the pin. Stop the Timer by clearing the mode control (MC) bits in the CTL register. Select SMCLK (12 MHz) as the timer clock source by setting the TASSEL bits and setting ID. Enable interrupt request of the corresponding Capture/Compare interrupt flag in the CCTL register using the CCIE bit. Store the period in the CCR0 register. Sets TAIDEX. Set the interrupt priority level to 2 using the IPR2 register of NVIC. Enable Interrupt 8 in NVIC by setting Bit 8 of the ISER register. Set the TACLR bit and enable Timer A using the mode control (MC) bits in the CTL register.
+
 Include C code such that:
 > SMCLK is selected as the clock source for Timer_A with a prescaler value of 1 (which means the ID field will be 00b)
-
+TIMER_A0->CTL &= ~(0xC0);
 > The TAIDEX field in the TAxEX0 register has a value of 000b (divide by 1)
-
+TIMER_A0->EX0 = 0x0000
 > Up mode is selected
+TIMER_A0->CTL &= ~(0x30);
+TIMER_A0->CTL |= (0x10);
